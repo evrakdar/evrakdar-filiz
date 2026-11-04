@@ -1,0 +1,27 @@
+node_modules/
+dist/
+.next/
+coverage/
+playwright-report/
+test-results/
+*.tsbuildinfo
+.env
+.env.local
+.env.production
+.env.*.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Local tooling (not part of the app)
+.agents/
+.codegraph/
+.tmp/
+skills-lock.json
+tree.txt
+
+# Uploaded/runtime data
+uploads/
+apps/api/data/
+*.log

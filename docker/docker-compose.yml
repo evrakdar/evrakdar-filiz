@@ -1,0 +1,27 @@
+# Service needed while developing: the database. Uploaded files go to apps/api/data/files.
+# The port is bound to 127.0.0.1 so it is not reachable from the network.
+# Values come from the root .env file via `npm run docker:up`; the defaults are for local development only.
+# For a real installation use kur.sh / kur.ps1 (docker-compose.prod.yml).
+name: evrakdar
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: evrakdar-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-evrakdar}
+      POSTGRES_USER: ${POSTGRES_USER:-evrakdar}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-evrakdar}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres-data:

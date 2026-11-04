@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --brand-50: 239 248 242;
+    --brand-100: 223 240 229;
+    --brand-200: 196 226 206;
+    --brand-300: 162 205 177;
+    --brand-400: 122 176 142;
+    --brand-500: 89 150 113;
+    --brand-600: 66 125 90;
+    --brand-700: 44 105 70;
+    --brand-800: 36 97 63;
+    --brand-900: 13 70 41;
+    --brand-950: 1 36 18;
+    --brand2-50: 242 246 244;
+    --brand2-100: 230 237 232;
+    --brand2-200: 208 221 212;
+    --brand2-300: 180 198 186;
+    --brand2-400: 145 168 153;
+    --brand2-500: 116 141 126;
+    --brand2-600: 93 117 102;
+    --brand2-700: 74 97 83;
+    --brand2-800: 58 81 67;
+    --brand2-900: 44 64 52;
+    --brand2-950: 30 52 39;
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --border: 214.3 31.8% 91.4%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    --radius: 0.5rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
+}

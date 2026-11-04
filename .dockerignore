@@ -1,0 +1,16 @@
+**/node_modules
+**/.next
+**/dist
+**/*.tsbuildinfo
+**/playwright-report
+**/test-results
+.git
+.env
+.env.*
+!.env.example
+.agents
+.codegraph
+.tmp
+docs
+apps/api/data
+tree.txt

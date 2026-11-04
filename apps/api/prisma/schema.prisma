@@ -1,0 +1,249 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum DocumentType {
+  REPORT
+  PRESENTATION
+  GUIDE
+  FORM
+  MINUTES
+  OTHER
+}
+
+enum AccessLevel {
+  PUBLIC
+  DEPARTMENT
+  CONFIDENTIAL
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+model User {
+  id                   String            @id @default(cuid())
+  username             String            @unique
+  passwordHash         String
+  firstName            String
+  lastName             String
+  title                String?
+  email                String            @unique
+  departmentId         String?
+  isActive             Boolean           @default(true)
+  mustChangePassword   Boolean           @default(false)
+  deletedAt            DateTime?
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+  department           Department?       @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  roles                UserRole[]
+  createdFolders       Folder[]          @relation("FolderCreatedBy")
+  responsibleDocuments Document[]        @relation("DocumentResponsibleUser")
+  createdDocuments     Document[]        @relation("DocumentCreatedBy")
+  createdVersions      DocumentVersion[] @relation("DocumentVersionCreatedBy")
+  favorites            Favorite[]
+  recentViews          RecentView[]
+  requestedApprovals   ApprovalRequest[] @relation("ApprovalRequestedBy")
+  assignedApprovals    ApprovalRequest[] @relation("ApprovalAssignedTo")
+  auditLogs            AuditLog[]
+  deletedDocuments     Document[]        @relation("DocumentDeletedBy")
+  deletedFolders       Folder[]          @relation("FolderDeletedBy")
+
+  @@index([departmentId])
+}
+
+model Role {
+  id          String     @id @default(cuid())
+  name        String     @unique
+  description String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  users       UserRole[]
+}
+
+model UserRole {
+  userId    String
+  roleId    String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@index([roleId])
+}
+
+model Department {
+  id                   String     @id @default(cuid())
+  name                 String
+  code                 String     @unique
+  createdAt            DateTime   @default(now())
+  updatedAt            DateTime   @updatedAt
+  users                User[]
+  responsibleFolders   Folder[]   @relation("FolderResponsibleDepartment")
+  responsibleDocuments Document[] @relation("DocumentResponsibleDepartment")
+}
+
+model Folder {
+  id                      String       @id @default(cuid())
+  name                    String
+  parentId                String?
+  path                    String
+  level                   Int          @default(0)
+  responsibleDepartmentId String?
+  createdById             String?
+  createdAt               DateTime     @default(now())
+  updatedAt               DateTime     @updatedAt
+  parent                  Folder?      @relation("FolderHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children                Folder[]     @relation("FolderHierarchy")
+  responsibleDepartment   Department?  @relation("FolderResponsibleDepartment", fields: [responsibleDepartmentId], references: [id], onDelete: SetNull)
+  createdBy               User?        @relation("FolderCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  deletedAt               DateTime?
+  deletedById             String?
+  deletedBy               User?        @relation("FolderDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
+  documents               Document[]
+  favorites               Favorite[]
+  recentViews             RecentView[]
+
+  @@unique([parentId, name])
+  @@index([responsibleDepartmentId])
+  @@index([createdById])
+  @@index([deletedAt])
+  @@index([deletedById])
+}
+
+model Document {
+  id                      String            @id @default(cuid())
+  folderId                String
+  name                    String
+  originalFileName        String
+  mimeType                String
+  sizeBytes               BigInt
+  documentType            DocumentType
+  responsibleDepartmentId String?
+  responsibleUserId       String?
+  validUntil              DateTime?
+  revisionNo              String            @default("1")
+  accessLevel             AccessLevel       @default(DEPARTMENT)
+  tags                    Json?
+  storageBucket           String
+  storageKey              String
+  createdById             String?
+  deletedAt               DateTime?
+  deletedById             String?
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @updatedAt
+  folder                  Folder            @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  responsibleDepartment   Department?       @relation("DocumentResponsibleDepartment", fields: [responsibleDepartmentId], references: [id], onDelete: SetNull)
+  responsibleUser         User?             @relation("DocumentResponsibleUser", fields: [responsibleUserId], references: [id], onDelete: SetNull)
+  createdBy               User?             @relation("DocumentCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  deletedBy               User?             @relation("DocumentDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
+  versions                DocumentVersion[]
+  favorites               Favorite[]
+  recentViews             RecentView[]
+  approvalRequests        ApprovalRequest[]
+
+  @@index([folderId])
+  @@index([documentType])
+  @@index([validUntil])
+  @@index([responsibleDepartmentId])
+  @@index([responsibleUserId])
+  @@index([createdById])
+  @@index([deletedAt])
+  @@index([deletedById])
+}
+
+model DocumentVersion {
+  id               String    @id @default(cuid())
+  documentId       String
+  versionNo        String
+  originalFileName String?
+  mimeType         String?
+  storageBucket    String
+  storageKey       String
+  sizeBytes        BigInt
+  ocrStatus        String?
+  extractedText    String?
+  ocrError         String?
+  ocrSkipped       Boolean   @default(false)
+  ocrUpdatedAt     DateTime?
+  createdById      String?
+  createdAt        DateTime  @default(now())
+  document         Document  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  createdBy        User?     @relation("DocumentVersionCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@unique([documentId, versionNo])
+  @@index([createdById])
+  @@index([ocrStatus])
+}
+
+model Favorite {
+  id         String    @id @default(cuid())
+  userId     String
+  documentId String?
+  folderId   String?
+  createdAt  DateTime  @default(now())
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  document   Document? @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  folder     Folder?   @relation(fields: [folderId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, documentId])
+  @@unique([userId, folderId])
+  @@index([documentId])
+  @@index([folderId])
+}
+
+model RecentView {
+  id         String    @id @default(cuid())
+  userId     String
+  documentId String?
+  folderId   String?
+  viewedAt   DateTime  @default(now())
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  document   Document? @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  folder     Folder?   @relation(fields: [folderId], references: [id], onDelete: Cascade)
+
+  @@index([userId, viewedAt])
+  @@index([documentId])
+  @@index([folderId])
+}
+
+model ApprovalRequest {
+  id            String         @id @default(cuid())
+  documentId    String
+  requestedById String?
+  assignedToId  String?
+  status        ApprovalStatus @default(PENDING)
+  note          String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  document      Document       @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  requestedBy   User?          @relation("ApprovalRequestedBy", fields: [requestedById], references: [id], onDelete: SetNull)
+  assignedTo    User?          @relation("ApprovalAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  @@index([documentId])
+  @@index([requestedById])
+  @@index([assignedToId])
+  @@index([status])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  action     String
+  entityType String
+  entityId   String
+  metadata   Json?
+  createdAt  DateTime @default(now())
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
