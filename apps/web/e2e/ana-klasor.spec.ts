@@ -85,6 +85,7 @@ test("the administrator can add a top-level folder from the explorer", async ({ 
   await page.getByLabel("Yeni klasör adı").fill(name);
   await page.getByRole("dialog").getByRole("button", { name: /Kaydet|Oluştur|Onayla|Tamam/ }).click();
   await expect(page.getByText("Ana klasör oluşturuldu.")).toBeVisible();
+  await expect(page.locator("aside", { hasText: "Klasör Ağacı" }).getByText(name), "yeni klasör ağaçta hemen görünür").toBeVisible();
 
   const roots = (await (await request.get(`${api}/folders/root`, { headers: admin })).json()).data as { id: string; name: string }[];
   const created = roots.find((folder) => folder.name === name);

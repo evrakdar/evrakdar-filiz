@@ -131,6 +131,7 @@ export function FileExplorerPanel({
   const dragTargetFolderIdRef = useRef<string | null>(null);
   const dropHandledRef = useRef(false);
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
+  const [treeRefreshKey, setTreeRefreshKey] = useState(0);
   const [currentFolder, setCurrentFolder] = useState<FolderDto | null>(null);
   const openFolderId = currentFolder?.id;
   const openFolderName = currentFolder?.name;
@@ -343,6 +344,7 @@ export function FileExplorerPanel({
   }
 
   async function reloadCurrent(successMessage?: string) {
+    setTreeRefreshKey((current) => current + 1);
     await loadLocation(currentFolderId, successMessage);
   }
 
@@ -491,6 +493,7 @@ export function FileExplorerPanel({
       setDialog(null);
 
       if (deletedCurrentFolder) {
+        setTreeRefreshKey((current) => current + 1);
         await loadLocation(parentAfterDelete, successMessage);
       } else {
         await reloadCurrent(successMessage);
@@ -879,6 +882,7 @@ export function FileExplorerPanel({
               </p>
             </div>
             <FolderTreeView
+              refreshKey={treeRefreshKey}
               selectedFolderId={currentFolderId}
               expandedFolderIds={breadcrumbFolderIds}
               onSelectFolder={(folder) => void navigateFromTree(folder)}

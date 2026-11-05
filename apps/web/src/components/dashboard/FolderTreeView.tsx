@@ -18,6 +18,8 @@ type FolderTreeViewProps = {
   rootLabel?: string;
   className?: string;
   showRoot?: boolean;
+  /** Change this number after folders change, to read them again without closing what is open. */
+  refreshKey?: number;
 };
 
 type FolderTreeState = {
@@ -40,7 +42,8 @@ export function FolderTreeView({
   dragOverFolderId,
   rootLabel = "Ana dizin",
   className = "",
-  showRoot = true
+  showRoot = true,
+  refreshKey = 0
 }: FolderTreeViewProps) {
   const [tree, setTree] = useState<FolderTreeState>({
     rootFolders: [],
@@ -55,7 +58,10 @@ export function FolderTreeView({
   useEffect(() => {
     let isActive = true;
 
-    setTree((current) => ({ ...current, status: "loading" }));
+    if (refreshKey === 0) {
+      setTree((current) => ({ ...current, status: "loading" }));
+    }
+
     getRootFolders()
       .then((response) => {
         if (!isActive) {
@@ -77,7 +83,21 @@ export function FolderTreeView({
     return () => {
       isActive = false;
     };
-  }, []);
+  }, [refreshKey]);
+
+  useEffect(() => {
+    if (refreshKey === 0) {
+      return;
+    }
+
+    setTree((current) => ({ ...current, loadedIds: new Set(), loadingIds: new Set() }));
+
+    for (const folderId of tree.expandedIds) {
+      void loadChildren(folderId);
+    }
+    // Only a new `refreshKey` reads the open folders again.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshKey]);
 
   useEffect(() => {
     if (expandedFolderIds.length === 0) {
